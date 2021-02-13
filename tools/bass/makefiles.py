@@ -121,10 +121,10 @@ class Item(object):
         if self.length() == 1:
             return ["{0:<24}{1}".format(variable+"=",self.str[0])]
         # Handle continuation lines
-        lines = ["{0:<24}{1}".format(variable+"=",self.str[0][:-2])]
+        lines = ["{0:<24}{1}".format(variable+"=",self.str[0])]
         for l in self.str[1:]:
             lines[-1] += "\\\n"
-            lines.append("\t"+l[:-2])
+            lines.append("\t"+l)
         lines[-1] += "\n"
         return lines
 
@@ -292,6 +292,18 @@ class Makefile(object):
     def build_bits(self):
         return self.variables['BUILD_BITS'].value()
 
+    def has_mk_include(self, name):
+        for i in iter(self.includes):
+            if re.match('^.*/'+name+'.mk$', i.value()):
+                return True
+        return False
+
+    def get_mk_include(self, name):
+        for i in iter(self.includes):
+            if re.match('^.*/'+name+'.mk$', i.value()):
+                return i
+        return None
+
     def has_variable(self, variable):
         return variable in self.variables
 
@@ -357,7 +369,13 @@ class Makefile(object):
     def target_definition(self, target):
         return self.targets[target].target_definition(target)
 
+    def required_packages(self):
+        return self.run("print-value-REQUIRED_PACKAGES")[0]
+
     def uses_pypi(self):
+        # Default build style is configure
+        if not self.has_variable('BUILD_STYLE'):
+            return False
         is_py = (self.build_style() == 'setup.py')
         urlnone = (not self.has_variable('COMPONENT_ARCHIVE_URL'))
         urlpipy = urlnone or (self.variable('COMPONENT_ARCHIVE_URL').value() == '$(call pypi_url)')
@@ -386,7 +404,7 @@ class Makefile(object):
 
     @staticmethod
     def directory_variable(subdir):
-        return self.value("WS_"+subdir.upper().replace("-","_"))
+        return Makefile.value("WS_"+subdir.upper().replace("-","_"))
 
     @staticmethod
     def makefile_path(name):
