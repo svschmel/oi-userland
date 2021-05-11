@@ -37,11 +37,8 @@
 # usr/lib/squeak/<version>-<svnversion>_64bit/  with a _64bit suffix
 # which is unfortunately not conforming to the usr/lib/amd64 usage
 # and it generates a hard error by pkglint "64-bit object in 32-bit path"
-#
-# it is possible to disable pkglint (PKGLINT=/bin/true) and build
-# the squeak4 package "as-is", but we deliver a patch and rename files
-# in order to put the 64-bit objects in their usual place to please pkglint
-#
+# so we deliver a patch and rename files
+# in order to put the 64-bit objects in their usual usr/lib/amd64 location
 
 BUILD_BITS=32_and_64
 
@@ -52,14 +49,15 @@ include ../../../make-rules/shared-macros.mk
 
 COMPONENT_NAME=		squeak-4
 COMPONENT_VERSION=	4.19.6
+COMPONENT_REVISION=	3
 COMPONENT_SUMMARY=	The Squeak V4 Smalltalk Virtual Machine
 COMPONENT_PROJECT_URL=	http://www.squeak.org
 COMPONENT_ARCHIVE_URL=  http://squeakvm.org
 COMPONENT_FMRI=		runtime/squeak-4
 COMPONENT_CLASSIFICATION=	Development/Other Languages
 SVN_REPO=		http://squeakvm.org/svn/squeak/trunk/
-SVN_REV=		3799
-SVN_HASH=  sha256:1ea914c51c82311a6cc2ca7070a55f6cdb5314600fdee80152db89ea35e809d0
+SVN_REV=                3800
+SVN_HASH=  sha256:9a0c9fceb0dec73218e0900d9864caf9eadbcbf060a14ba09bbe20d68283a003
 
 # See http://wiki.squeak.org/squeak/933
 # See http://wiki.squeak.org/squeak/159
@@ -71,7 +69,6 @@ TEST_TARGET= $(NO_TESTS)
 
 include $(WS_MAKE_RULES)/common.mk
 
-PKGLINT=	/bin/true
 PKG_OPTIONS += -DBRANCHID="$(BRANCHID)"
 PKG_OPTIONS += -DSVN_REV="$(SVN_REV)"
 
@@ -124,11 +121,13 @@ rebuild-manifests::
 	tools/amd64-p5m.sh
 	rm -f sample-manifest.p5m sample.p5m
 
+# disable pkglint until we find solution for 64bit object in 32-bit path error
+PKGLINT= /bin/true
+
 REQUIRED_PACKAGES += x11/library/mesa
 REQUIRED_PACKAGES += system/library/dbus
 
 # Auto-generated dependencies
-REQUIRED_PACKAGES += SUNWcs
 REQUIRED_PACKAGES += library/audio/gstreamer
 REQUIRED_PACKAGES += library/audio/pulseaudio
 REQUIRED_PACKAGES += library/desktop/cairo
@@ -136,6 +135,7 @@ REQUIRED_PACKAGES += library/desktop/pango
 REQUIRED_PACKAGES += library/glib2
 REQUIRED_PACKAGES += library/libffi
 REQUIRED_PACKAGES += library/security/openssl
+REQUIRED_PACKAGES += shell/ksh93
 REQUIRED_PACKAGES += system/library
 REQUIRED_PACKAGES += system/library/freetype-2
 REQUIRED_PACKAGES += system/library/libdbus
