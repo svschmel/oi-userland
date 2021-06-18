@@ -35,6 +35,7 @@ include ../../../make-rules/shared-macros.mk
 
 COMPONENT_NAME=		stack-spur
 COMPONENT_VERSION=	5.0.2957
+COMPONENT_REVISION=	3
 GIT_TAG=		sun-v5.0.29
 PLUGIN_REV=		5.0-202105050900
 COMPONENT_SUMMARY=	The OpenSmalltalk Stack Spur Virtual Machine
@@ -54,10 +55,6 @@ COMPONENT_ARCHIVE_HASH=	sha256:6975d8be2d8f4cf80c6f5ca60f14550325b6406f3be7b1bcd
 COMPONENT_ARCHIVE_URL=	https://codeload.github.com/cstes/opensmalltalk-vm/tar.gz/$(GIT_TAG)
 
 TEST_TARGET= $(NO_TESTS)
-
-# some builds seem to be broken with -Bdirect
-# but issue is not reproducable
-# LD_B_DIRECT=
 
 include $(WS_MAKE_RULES)/common.mk
 
@@ -79,10 +76,12 @@ COMPONENT_PRE_CONFIGURE_ACTION = ( \
 # we have to make sure largefile support is enabled in the 32bit case
 CPPFLAGS += $(CPP_LARGEFILES)
 
+# Spur memory management sometimes not compatible with traditional malloc
+LIBS = "-lmapmalloc"
+
 # the default CFLAGS.gcc will be -m64 -O3 but this does not work for us
 # opensmalltalk code is not compatible with the gcc optimizer -O2 or higher
-# also the -g (debug) flag is intentional, perhaps omit-frame-pointer issues
-gcc_OPT=		-g -DAIO_DEBUG -DNDEBUG -DDEBUGVM=0
+gcc_OPT=		-DAIO_DEBUG -DNDEBUG -DDEBUGVM=0
 
 CONFIGURE_SCRIPT= $(SOURCE_DIR)/platforms/unix/config/configure
 CONFIGURE_OPTIONS +=	--with-vmversion=5.0
@@ -95,6 +94,7 @@ CONFIGURE_OPTIONS +=	--without-vm-display-fbdev
 CONFIGURE_OPTIONS +=	--without-npsqueak
 
 CONFIGURE_ENV    +=     CPPFLAGS="$(CPPFLAGS)"
+CONFIGURE_ENV    +=     LIBS="$(LIBS)"
 CONFIGURE_ENV.32 +=	TARGET_ARCH="-m32"
 CONFIGURE_ENV.64 +=	TARGET_ARCH="-m64"
 
@@ -114,6 +114,7 @@ COMPONENT_POST_INSTALL_ACTION = \
 
 rebuild-manifests::
 	cp manifests/stack-spur.p5m stack-spur.p5m
+	cp manifests/stack-spur-ssl.p5m stack-spur-ssl.p5m
 	cp manifests/stack-spur-display-X11.p5m stack-spur-display-X11.p5m
 	cp manifests/stack-spur-nodisplay.p5m stack-spur-nodisplay.p5m
 	cp manifests/sample-manifest.p5m sample-manifest.p5m
